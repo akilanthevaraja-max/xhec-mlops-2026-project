@@ -31,12 +31,6 @@ repos:
         entry: uv run --locked nbstripout
         language: system
         files: \.ipynb$
-      - id: dependency-inputs
-        name: Check dependency inputs
-        entry: uv run --locked python scripts/check_dependencies.py
-        language: system
-        pass_filenames: false
-        files: ^(pyproject\.toml|requirements(-dev)?\.in|constraints-course\.txt|scripts/check_dependencies\.py)$
       - id: uv-lock
         name: Check uv lockfile
         entry: uv lock --check

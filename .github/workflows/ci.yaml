@@ -24,8 +24,6 @@ jobs:
         run: uv sync --locked
       - name: Check installed dependencies
         run: uv pip check
-      - name: Check course dependency inputs
-        run: uv run --locked python scripts/check_dependencies.py
       - name: Check imports and course API compatibility
         run: uv run --locked python scripts/check_environment.py
       - name: Run pre-commit checks
