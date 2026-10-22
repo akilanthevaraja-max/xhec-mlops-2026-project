@@ -1,0 +1,4 @@
+# Transitive versions validated in the previous course activity.
+cryptography==45.0.7
+scipy==1.16.1
+ipython==9.5.0

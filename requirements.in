@@ -1,2 +1,16 @@
-# TODO - complete with requirements (pandas, sklearn etc...)
-# Then, execute "pip-compile requirements.in" to generate the file requirements.txt
+# Runtime dependencies mirror [project.dependencies] in pyproject.toml.
+-c constraints-course.txt
+numpy==1.26.4
+pandas==2.1.1
+scikit-learn==1.5.2
+joblib==1.5.2
+matplotlib==3.10.6
+seaborn==0.12.2
+loguru==0.7.2
+pydantic>=1,<2
+fastapi==0.103.2
+uvicorn==0.23.2
+prefect==2.13.7
+griffe<1.0.0
+httpx>=0.24.1,<0.28
+setuptools==80.9.0
