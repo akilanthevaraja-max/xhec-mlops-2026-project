@@ -1,34 +1,40 @@
 repos:
-  - repo: "https://github.com/pre-commit/pre-commit-hooks"
-    rev: v4.4.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-toml
       - id: check-yaml
+        args: ["--unsafe"]
       - id: check-json
       - id: check-added-large-files
   - repo: local
     hooks:
-      - id: black
-        name: Formatting (black)
-        entry: black
-        language: python
-        types_or: [python, pyi, jupyter]
-        additional_dependencies: [".[jupyter]"]
-      - id: isort
-        name: Sorting imports (isort)
-        entry: isort
-        types: [python]
+      - id: ruff-format
+        name: Formatting (ruff)
+        entry: uv run --locked ruff format
         language: system
-      - id: ruff # TODO - remove this if you chose not to use ruff (must have one of ruff or flake8)
+        types: [python]
+      - id: ruff-fix
         name: Linting (ruff)
-        entry: ruff
-        types: [python]
+        entry: uv run --locked ruff check
         language: system
-      - id: flake8 # TODO - remove this if you chose not to use flake8 (must have one of ruff or flake8)
-        name: Linting (flake8)
-        entry: flake8
         types: [python]
+      - id: ruff-sort
+        name: Sorting imports (ruff)
+        entry: uv run --locked ruff check --select I --fix
         language: system
-exclude: ^(.svn|CVS|.bzr|.hg|.git|__pycache__|.tox|.ipynb_checkpoints|assets|tests/assets/|venv/|.venv/)
+        types: [python]
+      - id: nbstripout
+        name: Strip Jupyter notebook output
+        entry: uv run --locked nbstripout
+        language: system
+        files: \.ipynb$
+      - id: uv-lock
+        name: Check uv lockfile
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
+exclude: ^(assets/|data/|models/|work/|\.venv/)
