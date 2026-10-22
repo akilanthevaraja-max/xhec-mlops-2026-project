@@ -296,3 +296,109 @@ uv run pre-commit run --all-files
 ```
 
 Stage 1 does not implement the later stages' Python-module training CLI, pickle export, Prefect deployment, or FastAPI/Docker service.
+
+## Stage 3: Prefect training, inference, and scheduled retraining
+
+The implementation follows the course's `@task`, `@flow`, `to_deployment`, and
+`serve` pattern. It reuses the stage-2 linear pipeline, validation, and pickle
+format without changing the modelling recipe. Training and inference are separate
+flow modules:
+
+- `modelling.workflows`: load/validate, evaluate/refit, and save tasks in the training flow.
+- `modelling.inference`: a separate inference flow using the saved pipeline.
+- `modelling.deployment`: weekly training deployment, Sunday 00:00 in `Europe/Paris`.
+
+Prefect 2.13.7 is retained from the course environment. `cachetools` is explicitly
+included because this Prefect server version imports it. SQLAlchemy is pinned to
+the course-tested 2.0.43 because 2.1 fails while generating scheduled runs for
+this Prefect version. Dependencies remain
+managed by the team's `pyproject.toml` and `uv.lock`, not separate requirements files.
+
+### Start the local server
+
+Run all commands from the repository root. Use the following environment variables
+in **each terminal** used below. Port 4202 avoids colliding with other course servers;
+keep the API URL and server port consistent if you choose another port.
+
+```bash
+uv sync --locked
+export PREFECT_HOME="$PWD/work/prefect-stage3"
+export PREFECT_API_URL="http://127.0.0.1:4202/api"
+uv run prefect server start --host 127.0.0.1 --port 4202
+```
+
+Keep this terminal running. Open http://127.0.0.1:4202 for the UI. Its local SQLite
+metadata and logs live under ignored `work/prefect-stage3/`.
+
+### Run training and inference directly
+
+In another terminal, export the same two variables, then run:
+
+```bash
+uv run python -m modelling.workflows data/abalone.csv
+```
+
+The training flow saves `src/web_service/local_objects/abalone_pipeline.pkl`.
+Its `production_training_rows` describes the saved full-data model; `evaluation`
+records the separate fixed-holdout model's scores. The split is reused from stage 1,
+so these are reproducibility checks rather than a new independent test.
+
+For an inference example, create a JSON list of observations with exactly the eight
+predictors (no `Rings` or derived `Age`):
+
+```bash
+mkdir -p work
+uv run python -c 'import pandas as pd; from pathlib import Path; df = pd.read_csv("data/abalone.csv"); Path("work/observations.json").write_text(df.drop(columns="Rings").head(3).to_json(orient="records"))'
+uv run python -m modelling.inference src/web_service/local_objects/abalone_pipeline.pkl work/observations.json
+```
+
+The example selects existing rows only to verify the prediction interface; it is
+not an unseen-data evaluation. Real inference inputs must use the same schema.
+View both flow runs, task states, and logs under **Flow Runs** in the Prefect UI.
+
+### Serve and test the scheduled deployment
+
+In a terminal with the same variables, run:
+
+```bash
+uv run python -m modelling.deployment
+```
+
+This registers `Abalone model training/weekly-retraining` and keeps a local runner
+listening for work. In the UI, confirm the weekly schedule and `Europe/Paris`
+timezone. To test immediately without waiting until Sunday, use a third terminal
+with the same variables:
+
+```bash
+uv run prefect deployment run 'Abalone model training/weekly-retraining'
+```
+
+The CLI creates a run; confirm it reaches **Completed**, its tasks finish, and the
+artifact is updated. This tests the registered deployment and runner, not just a
+function call. A successful manual run does not prove that a weekly scheduled run
+has already happened. Check the active schedule and upcoming scheduled runs
+separately in the UI.
+
+For an optional short scheduling exercise, the same runner accepts another cron:
+
+```bash
+uv run python -m modelling.deployment --cron '*/2 * * * *'
+```
+
+Run only one serving process for this deployment at a time. Stop the short-interval
+runner and restart the default command to restore weekly retraining. The default
+remains the course's weekly schedule. The server and runner both need to remain
+running for local automation; closing the runner normally pauses its deployment.
+This is a local learning setup, not a hosted always-on service.
+
+### Checks
+
+```bash
+uv run pytest
+uv run pre-commit run --all-files
+```
+
+Automated tests validate the weekly schedule configuration without starting a
+server. Actual flow execution and deployment triggering require the live server
+and runner described above. Generated models, database files, and runtime logs
+are ignored by Git. FastAPI and Docker service delivery remain stage 4.

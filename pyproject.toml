@@ -30,6 +30,8 @@ dependencies = [
     "httpx>=0.24.1,<0.28",
     "setuptools==80.9.0",
     "mlflow==2.7.1",
+    "cachetools==5.5.2",
+    "sqlalchemy==2.0.43",
 ]
 
 [project.urls]

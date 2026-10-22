@@ -7,10 +7,30 @@ from pathlib import Path
 from typing import Any
 
 from modelling.preprocessing import FEATURE_COLUMNS, TARGET_COLUMN, load_dataset
-from modelling.training import RANDOM_STATE, TEST_SIZE, train_and_evaluate
+from modelling.training import RANDOM_STATE, TEST_SIZE, TrainingResult, train_and_evaluate
 from modelling.utils import pickle_object
 
 DEFAULT_MODEL_PATH = Path("src/web_service/local_objects/abalone_pipeline.pkl")
+
+
+def build_metadata(dataset_path: Path, dataset_rows: int, result: TrainingResult) -> dict[str, Any]:
+    """Describe the saved full-data fit separately from the holdout evaluation."""
+    return {
+        "model": "linear_regression",
+        "features": list(FEATURE_COLUMNS),
+        "target": TARGET_COLUMN,
+        "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
+        "dataset_rows": dataset_rows,
+        "random_state": RANDOM_STATE,
+        "test_size": TEST_SIZE,
+        "production_training_rows": result.production_training_rows,
+        "evaluation": {
+            "model_scope": "separate_holdout_model_before_full_data_refit",
+            "training_rows": result.evaluation_training_rows,
+            "test_rows": result.evaluation_test_rows,
+            "test_metrics": result.metrics,
+        },
+    }
 
 
 def main(trainset_path: str | Path, output_path: str | Path = DEFAULT_MODEL_PATH) -> dict[str, Any]:
@@ -26,22 +46,7 @@ def main(trainset_path: str | Path, output_path: str | Path = DEFAULT_MODEL_PATH
     dataset_path = Path(trainset_path)
     dataframe = load_dataset(dataset_path)
     result = train_and_evaluate(dataframe)
-    metadata: dict[str, Any] = {
-        "model": "linear_regression",
-        "features": list(FEATURE_COLUMNS),
-        "target": TARGET_COLUMN,
-        "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
-        "dataset_rows": len(dataframe),
-        "random_state": RANDOM_STATE,
-        "test_size": TEST_SIZE,
-        "production_training_rows": result.production_training_rows,
-        "evaluation": {
-            "model_scope": "separate_holdout_model_before_full_data_refit",
-            "training_rows": result.evaluation_training_rows,
-            "test_rows": result.evaluation_test_rows,
-            "test_metrics": result.metrics,
-        },
-    }
+    metadata = build_metadata(dataset_path, len(dataframe), result)
     pickle_object({"pipeline": result.pipeline, "metadata": metadata}, output_path)
     print(json.dumps({"artifact": str(Path(output_path)), **metadata}, indent=2))
     return metadata
