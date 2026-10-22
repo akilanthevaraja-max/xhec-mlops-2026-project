@@ -14,7 +14,8 @@ COPY bin ./bin
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/src:/app" \
-    PREFECT_HOME="/app/.prefect"
+    PREFECT_HOME="/app/.prefect" \
+    PYTHONWARNINGS="ignore:Skipped unsupported reflection of expression-based index"
 
 # The model pickle is not versioned, so train it while building the image
 RUN python -m modelling.main data/abalone.csv
