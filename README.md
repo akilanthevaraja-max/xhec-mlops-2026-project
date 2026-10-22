@@ -225,6 +225,13 @@ fits categorical encoding and linear regression in one sklearn pipeline, evaluat
 recipe on a fixed holdout, refits on all observations, and serializes the complete
 pipeline for later API use.
 
+The pickle contains `pipeline` and `metadata`. `metadata.production_training_rows`
+counts the observations used to fit the saved pipeline. The separate
+`metadata.evaluation` block records the holdout model's training/test row counts,
+metrics, and model scope. Those scores describe the evaluation model before the
+full-data refit, not an independent test of the saved full-data pipeline. The
+fixed split reproduces the stage-1 evaluation rather than introducing a new test set.
+
 Train from the repository root:
 
 ```bash

@@ -34,9 +34,13 @@ def main(trainset_path: str | Path, output_path: str | Path = DEFAULT_MODEL_PATH
         "dataset_rows": len(dataframe),
         "random_state": RANDOM_STATE,
         "test_size": TEST_SIZE,
-        "training_rows": result.training_rows,
-        "test_rows": result.test_rows,
-        "test_metrics": result.metrics,
+        "production_training_rows": result.production_training_rows,
+        "evaluation": {
+            "model_scope": "separate_holdout_model_before_full_data_refit",
+            "training_rows": result.evaluation_training_rows,
+            "test_rows": result.evaluation_test_rows,
+            "test_metrics": result.metrics,
+        },
     }
     pickle_object({"pipeline": result.pipeline, "metadata": metadata}, output_path)
     print(json.dumps({"artifact": str(Path(output_path)), **metadata}, indent=2))

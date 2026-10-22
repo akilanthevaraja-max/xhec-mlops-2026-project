@@ -9,7 +9,7 @@ import pytest
 from modelling.main import main
 from modelling.predicting import predict, predict_from_artifact
 from modelling.preprocessing import FEATURE_COLUMNS, load_dataset, split_features_target
-from modelling.training import train_and_evaluate
+from modelling.training import build_pipeline, train_and_evaluate
 from modelling.utils import load_pickle
 
 
@@ -69,4 +69,19 @@ def test_main_serializes_reusable_pipeline(tmp_path: Path) -> None:
 
     assert metadata["dataset_rows"] == len(dataframe)
     assert metadata["features"] == list(FEATURE_COLUMNS)
+    assert metadata["production_training_rows"] == len(dataframe)
+    assert metadata["evaluation"]["training_rows"] == 48
+    assert metadata["evaluation"]["test_rows"] == 12
+    assert metadata["evaluation"]["model_scope"] == "separate_holdout_model_before_full_data_refit"
+    assert set(metadata["evaluation"]["test_metrics"]) == {"mae", "rmse", "r2"}
+    assert artifact["metadata"] == metadata
+    # The saved estimator must match a fit on all rows, rather than the holdout fit.
+    persisted_dataframe = load_dataset(dataset_path)
+    full_data_pipeline = build_pipeline().fit(
+        persisted_dataframe.loc[:, list(FEATURE_COLUMNS)].to_dict(orient="records"), persisted_dataframe["Rings"]
+    )
+    np.testing.assert_allclose(
+        predict(artifact["pipeline"], dataframe.loc[:, list(FEATURE_COLUMNS)]),
+        predict(full_data_pipeline, dataframe.loc[:, list(FEATURE_COLUMNS)]),
+    )
     np.testing.assert_allclose(loaded_prediction, direct_prediction)

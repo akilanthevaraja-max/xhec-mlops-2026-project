@@ -22,8 +22,9 @@ class TrainingResult:
 
     pipeline: Pipeline
     metrics: dict[str, float]
-    training_rows: int
-    test_rows: int
+    evaluation_training_rows: int
+    evaluation_test_rows: int
+    production_training_rows: int
 
 
 def build_pipeline() -> Pipeline:
@@ -53,8 +54,9 @@ def train_and_evaluate(
 ) -> TrainingResult:
     """Evaluate on a fixed holdout and refit the production pipeline on all rows.
 
-    The holdout model produces an unbiased score for this fixed recipe. A new pipeline is
-    then fitted on the full dataset and returned for downstream inference.
+    Metrics describe a separate model fitted on the evaluation training split. The split
+    reproduces the notebook evaluation; it is not a new independent test. A new pipeline
+    is then fitted on the full dataset and returned for downstream inference.
     """
     features, target = split_features_target(dataframe)
     train_features, test_features, train_target, test_target = train_test_split(
@@ -76,6 +78,7 @@ def train_and_evaluate(
     return TrainingResult(
         pipeline=production_pipeline,
         metrics=metrics,
-        training_rows=len(train_features),
-        test_rows=len(test_features),
+        evaluation_training_rows=len(train_features),
+        evaluation_test_rows=len(test_features),
+        production_training_rows=len(features),
     )
