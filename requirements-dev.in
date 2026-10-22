@@ -1,2 +1,10 @@
-# TODO - complete with dev requirements (black, flake8, ruff, etc...)
-# Then, execute "pip-compile requirements-dev.in" to generate the file requirements-dev.txt
+# Development dependencies mirror [dependency-groups.dev] in pyproject.toml.
+-c constraints-course.txt
+-r requirements.in
+ipykernel==6.25.2
+nbclient==0.10.4
+nbstripout==0.8.1
+pre-commit==4.2.0
+ruff==0.12.11
+pip-tools==7.5.0
+pip==25.2

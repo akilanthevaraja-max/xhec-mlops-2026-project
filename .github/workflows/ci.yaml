@@ -2,20 +2,31 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
-  CI:
-    name: Launching CI
+  quality:
+    name: Python environment and code quality
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.10'] # TODO: update this version
-
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: # TODO create a step to install your project's dependencies
-      - name: # TODO create a step to test the quality of your code
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.21"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Check installed dependencies
+        run: uv pip check
+      - name: Check course dependency inputs
+        run: uv run --locked python scripts/check_dependencies.py
+      - name: Check imports and course API compatibility
+        run: uv run --locked python scripts/check_environment.py
+      - name: Run pre-commit checks
+        run: uv run --locked pre-commit run --all-files --show-diff-on-failure
