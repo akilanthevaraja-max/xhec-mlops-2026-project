@@ -175,12 +175,12 @@ Your project will be evaluated on:
 When you're done, your repository should contain:
 
 ✅ **Automated Training Pipeline**
-- [ ] Prefect workflows for model training
-- [ ] Separate modules for training and inference
-- [ ] Reproducible model and encoder generation
+- [x] Prefect workflows for model training
+- [x] Separate modules for training and inference
+- [x] Reproducible model and encoder generation
 
 ✅ **Automated Deployment**
-- [ ] Prefect deployment for regular retraining
+- [x] Prefect deployment for regular retraining
 
 ✅ **Production API**
 - [ ] Working REST API for predictions
@@ -322,6 +322,7 @@ keep the API URL and server port consistent if you choose another port.
 
 ```bash
 uv sync --locked
+mkdir -p work/prefect-stage3
 export PREFECT_HOME="$PWD/work/prefect-stage3"
 export PREFECT_API_URL="http://127.0.0.1:4202/api"
 uv run prefect server start --host 127.0.0.1 --port 4202
@@ -370,8 +371,13 @@ timezone. To test immediately without waiting until Sunday, use a third terminal
 with the same variables:
 
 ```bash
-uv run prefect deployment run 'Abalone model training/weekly-retraining'
+uv run prefect deployment run 'Abalone model training/weekly-retraining' \
+  --param output_path="$PWD/src/web_service/local_objects/abalone_pipeline.pkl"
 ```
+
+The `--param` is a workaround: with Prefect 2.13.7 and the installed `typer`, the CLI
+crashes with `TypeError: 'NoneType' object is not iterable` when no `--param` is given.
+You can also trigger the run from the UI (**Deployments** > **Run**).
 
 The CLI creates a run; confirm it reaches **Completed**, its tasks finish, and the
 artifact is updated. This tests the registered deployment and runner, not just a
