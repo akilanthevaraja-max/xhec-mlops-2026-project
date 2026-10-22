@@ -1,0 +1,51 @@
+"""Tests for the FastAPI prediction service."""
+
+import pytest
+from fastapi.testclient import TestClient
+
+from modelling.preprocessing import load_dataset
+from modelling.training import train_and_evaluate
+from src.web_service import main as web_service
+
+VALID_OBSERVATION = {
+    "Sex": "M",
+    "Length": 0.455,
+    "Diameter": 0.365,
+    "Height": 0.095,
+    "Whole weight": 0.514,
+    "Shucked weight": 0.2245,
+    "Viscera weight": 0.101,
+    "Shell weight": 0.15,
+}
+
+
+@pytest.fixture
+def client(monkeypatch: pytest.MonkeyPatch, tmp_path) -> TestClient:
+    """Serve a pipeline trained on the project dataset, without relying on a saved artifact."""
+    monkeypatch.setattr(web_service, "MODEL_PATH", tmp_path / "missing.pkl")
+    monkeypatch.setattr(web_service, "artifact", {"pipeline": train_and_evaluate(load_dataset("data/abalone.csv")).pipeline})
+    with TestClient(web_service.app) as test_client:
+        yield test_client
+
+
+def test_health_check(client: TestClient) -> None:
+    assert client.get("/").json() == {"health_check": "App up and running!"}
+
+
+def test_predict_returns_a_number_of_rings(client: TestClient) -> None:
+    response = client.post("/predict", json=VALID_OBSERVATION)
+
+    assert response.status_code == 201
+    assert 1 < response.json()["prediction"] < 30
+
+
+@pytest.mark.parametrize("override", [{"Sex": "X"}, {"Length": -1}, {"Shell weight": "heavy"}])
+def test_predict_rejects_invalid_input(client: TestClient, override: dict) -> None:
+    assert client.post("/predict", json={**VALID_OBSERVATION, **override}).status_code == 422
+
+
+def test_predict_without_model_returns_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(web_service, "artifact", {})
+    monkeypatch.setattr(web_service, "MODEL_PATH", web_service.Path("does-not-exist.pkl"))
+    with TestClient(web_service.app) as test_client:
+        assert test_client.post("/predict", json=VALID_OBSERVATION).status_code == 503

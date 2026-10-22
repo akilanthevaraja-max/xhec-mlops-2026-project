@@ -183,14 +183,14 @@ When you're done, your repository should contain:
 - [x] Prefect deployment for regular retraining
 
 ✅ **Production API**
-- [ ] Working REST API for predictions
-- [ ] Pydantic input validation
-- [ ] Docker containerization
+- [x] Working REST API for predictions
+- [x] Pydantic input validation
+- [x] Docker containerization
 
 ✅ **Professional Documentation**
-- [ ] Updated README with team info
-- [ ] Clear setup and run instructions
-- [ ] All TODOs removed from code
+- [x] Updated README with team info
+- [x] Clear setup and run instructions
+- [x] All TODOs removed from code
 
 ---
 
@@ -408,3 +408,62 @@ Automated tests validate the weekly schedule configuration without starting a
 server. Actual flow execution and deployment triggering require the live server
 and runner described above. Generated models, database files, and runtime logs
 are ignored by Git. FastAPI and Docker service delivery remain stage 4.
+
+## Stage 4: FastAPI prediction service and Docker
+
+The service lives in `src/web_service`:
+
+- `lib/models.py`: Pydantic input (`AbaloneInput`) and output (`AbaloneOutput`) models. The input uses the
+  dataset's column names (`Sex`, `Length`, `Whole weight`, ...) as JSON keys; `Sex` must be `F`, `I` or `M`
+  and the seven measurements must be `>= 0`.
+- `lib/inference.py`: runs `modelling.predicting.predict` on one validated observation.
+- `utils.py`: `load_object`, which loads the trusted training pickle.
+- `main.py`: `GET /` (health check) and `POST /predict`. The pipeline is loaded once at startup from
+  `src/web_service/local_objects/abalone_pipeline.pkl` (override with the `MODEL_PATH` environment variable).
+  If the file is missing, `/predict` answers `503`; invalid input answers `422`.
+
+### Run the API locally
+
+From the repository root, train the model first (it writes the ignored pickle), then start the API:
+
+```bash
+uv sync --locked
+uv run python -m modelling.main data/abalone.csv
+uv run uvicorn src.web_service.main:app --port 8001
+```
+
+Open http://127.0.0.1:8001/docs for the interactive documentation, or send a request:
+
+```bash
+curl -X POST http://127.0.0.1:8001/predict -H 'Content-Type: application/json' -d '{
+  "Sex": "M", "Length": 0.455, "Diameter": 0.365, "Height": 0.095,
+  "Whole weight": 0.514, "Shucked weight": 0.2245, "Viscera weight": 0.101, "Shell weight": 0.15
+}'
+# {"prediction": 9.17...}
+```
+
+`prediction` is the predicted number of rings (the age in years is `Rings + 1.5`).
+
+### Run the API in Docker
+
+`Dockerfile.app` installs the locked runtime dependencies with `uv`, trains the model while building the image
+(the pickle is not versioned), and starts `bin/run_services.sh`, which runs the Prefect server (port 4201 in the
+container) and the API (port 8001 in the container).
+
+```bash
+docker build -f Dockerfile.app -t abalone-app .
+docker run --rm -p 0.0.0.0:8000:8001 -p 0.0.0.0:4200:4201 abalone-app
+```
+
+- API: http://localhost:8000 (docs at http://localhost:8000/docs)
+- Prefect UI: http://localhost:4200
+
+```bash
+curl -X POST http://localhost:8000/predict -H 'Content-Type: application/json' -d '{
+  "Sex": "M", "Length": 0.455, "Diameter": 0.365, "Height": 0.095,
+  "Whole weight": 0.514, "Shucked weight": 0.2245, "Viscera weight": 0.101, "Shell weight": 0.15
+}'
+```
+
+The Prefect server logs a harmless `database is locked` telemetry error while starting. Dependencies are managed by
+`pyproject.toml` and `uv.lock` (no separate `requirements.in`/`requirements.txt`).

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# TODO: Use this file in your Dockerfile to run the services
-
+# Start the Prefect server (UI on 4201) in the background, then the FastAPI service (8001)
 prefect server start --host 0.0.0.0 --port 4201 &
-uvicorn src.web_service.main:app --host 0.0.0.0 --port 8001
+exec uvicorn src.web_service.main:app --host 0.0.0.0 --port 8001
