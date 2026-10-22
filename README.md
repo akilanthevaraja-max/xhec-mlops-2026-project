@@ -84,7 +84,17 @@ source .venv/bin/activate
 
 Select `.venv/bin/python` as the VS Code interpreter and the notebook kernel on macOS/Linux. On Windows select `.venv\Scripts\python.exe`.
 
-The unused conda template has been removed because uv is the selected environment manager. Stage 0 does not yet define an application package; the empty setuptools package list avoids referencing a `src` directory that has not been introduced yet.
+The course uv workflow is the primary path validated locally and in CI. The team's Conda option is retained and uses the same Python 3.11 and universal requirements versions:
+
+```bash
+conda env create -f environment.yml
+conda activate xhec-mlops
+pre-commit install
+```
+
+The Conda environment has a different location from `.venv`; do not copy either environment between systems. The Conda route is supplied as an alternative, not claimed as a separately executed validation.
+
+Stage 0 does not yet define an application package; the empty setuptools package list avoids referencing a `src` directory that has not been introduced yet.
 
 ## Dependency files
 
@@ -111,7 +121,7 @@ uv pip compile --universal --python-version 3.11 --generate-hashes --output-file
 uv sync --locked
 ```
 
-For a development dependency use `uv add --dev 'package==version'` and update `requirements-dev.in`. The course pip-tools compiler remains available. The checked-in `.txt` files use the equivalent `uv pip compile --universal` command so platform markers are retained instead of freezing only the current Mac environment. These files are a requirements-based installation alternative. The universal uv lockfile is the primary cross-platform environment definition used by CI. Do not copy `.venv` between teammates or mount a macOS `.venv` into a Linux container; create a new environment on each platform from the same lockfile.
+For a development dependency use `uv add --dev 'package==version'` and update `requirements-dev.in`. JupyterLab and pytest are retained from the team environment work in the development group; joblib is declared explicitly for model serialization. The course pip-tools compiler remains available. The checked-in `.txt` files use the equivalent `uv pip compile --universal` command so platform markers are retained instead of freezing only the current Mac environment. These files are a requirements-based installation alternative. The universal uv lockfile is the primary cross-platform environment definition used by CI. Do not copy `.venv` between teammates or mount a macOS `.venv` into a Linux container; create a new environment on each platform from the same lockfile.
 
 ## Local data and generated artifacts
 
@@ -160,6 +170,6 @@ GitHub Actions installs the locked environment on Python 3.11 and runs dependenc
 - Ruff and pre-commit are configured; hooks are installed locally.
 - GitHub Actions runs environment and quality checks.
 - Local data and generated artifacts are ignored.
-- The unused conda file and assignment-only `PR_0.md` are removed before the PR.
+- The optional Conda environment is aligned with the shared dependencies; assignment-only `PR_0.md` is removed before the PR.
 
 Later-stage setup and execution instructions will be added with the corresponding implementations.
