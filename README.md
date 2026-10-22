@@ -1,16 +1,51 @@
 <div align="center">
 
-# xhec-mlops-project-student
+# Abalone Age Prediction — MLOps Project
 
-[![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10-blue.svg)]()
+[![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue.svg)]()
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 [![Linting: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-informational?logo=pre-commit&logoColor=white)](https://github.com/artefactory/xhec-mlops-project-student/blob/main/.pre-commit-config.yaml)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-informational?logo=pre-commit&logoColor=white)](https://github.com/akilanthevaraja-max/xhec-mlops-2026-project/blob/main/.pre-commit-config.yaml)
 </div>
 
 This repository has for purpose to industrialize the [Abalone age prediction](https://www.kaggle.com/datasets/rodolfomendes/abalone-dataset) Kaggle contest.
+
+## Team
+
+- Akilan Thevaraja ([@akilanthevaraja-max](https://github.com/akilanthevaraja-max))
+
+## Development environment
+
+Python 3.10 or 3.11 is required. The following commands create an isolated
+environment, install the application and development dependencies, and enable
+the automatic quality checks:
+
+```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install pip-tools
+pip-compile requirements.in
+pip-compile requirements-dev.in
+python -m pip install -r requirements.txt -r requirements-dev.txt
+pre-commit install
+pre-commit run --all-files
+```
+
+On Windows, activate the environment with `.venv\Scripts\activate` instead.
+
+Conda users can create the same environment with:
+
+```bash
+conda env create -f environment.yml
+conda activate xhec-mlops
+pre-commit install
+```
+
+When adding or updating a dependency, edit the relevant `.in` file and rerun
+both `pip-compile` commands before committing the generated lock files.
 
 <details>
 <summary>Details on the Abalone Dataset</summary>
@@ -25,7 +60,9 @@ You can download the dataset on the [Kaggle page](https://www.kaggle.com/dataset
 
 ## Table of Contents
 
-- [xhec-mlops-project-student](#xhec-mlops-project-student)
+- [Abalone Age Prediction — MLOps Project](#abalone-age-prediction--mlops-project)
+  - [Team](#team)
+  - [Development environment](#development-environment)
   - [Table of Contents](#table-of-contents)
   - [Deliverables and Evaluation](#deliverables-and-evaluation)
     - [Deliverables](#deliverables)
@@ -38,7 +75,7 @@ You can download the dataset on the [Kaggle page](https://www.kaggle.com/dataset
 
 ### Deliverables
 
-The deliverable of this project is a copy of this repository with the industrialization of the Abalone age prediction model. We expect to see: 
+The deliverable of this project is a copy of this repository with the industrialization of the Abalone age prediction model. We expect to see:
 
 1. a workflow to train a model using Prefect
 - The workflows to train the model and to make the inference (prediction of the age of abalone) are in separate modules and use Prefect `flow` and `task` objects
@@ -59,32 +96,32 @@ Each of your pull requests will be graded based on the following criteria:
   - use of docstrings and type hinting
 - **Formatting**
   - respect of clear code conventions
-  
+
   *P.S. you can use a linter and automatic code formatters to help you with that*
 
 - Proper **Functioning** of the code
   - the code must run without bugs
 
-Bseides the evaluation of the pull requests, we will also evaluate: 
+Bseides the evaluation of the pull requests, we will also evaluate:
 - **Reproducibility** and clarity of instructions to run the code (we will actually try to run your code)
-  - Having a clear README.md with 
+  - Having a clear README.md with
     - the context of the project
     - the name of the participants and their github users
     - the steps to recreate the Python environment
     - the instructions to run all parts of the code
-- Use of *Pull Requests* (see below) to coordinate your collaboration 
+- Use of *Pull Requests* (see below) to coordinate your collaboration
 
 ## Steps to reproduce to build the deliverable
 
-To help you with the structure and order of steps to perform in this project, we created different pull requests templates. 
+To help you with the structure and order of steps to perform in this project, we created different pull requests templates.
 Each branch in this repository corresponds to a future pull request and has an attached markdown file with the instructions to perform the tasks of the pull request.
 Each branch starts with a number.
 You can follow the order of the branches to build your project and collaborate.
 
 > [!NOTE]
-> There are "TODO" in the code of the different branches. Each "TODO" corresponds to a task to perform to build the project.
+> There are placeholders in the code of the different branches. Each placeholder corresponds to a task to perform to build the project.
 > [!IMPORTANT]
-> Remember to remove all code that is not used before the end of the project (including all TODO tags in the code).
+> Remember to remove all code and placeholders that are not used before the end of the project.
 
 **Please follow these steps**:
 
@@ -102,7 +139,7 @@ You can follow the order of the branches to build your project and collaborate.
    > ```bash
    > git checkout branch_number_i
    > git pull origin master
-   > # At this point, you might have a VIM window opening, you can close it using the command ":wq" 
+   > # At this point, you might have a VIM window opening, you can close it using the command ":wq"
    > git push
    > ```
     - Do as many commits as necessary on the branch_number_i to perform the task indicated in the corresponding markdown file
