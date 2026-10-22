@@ -1,175 +1,240 @@
-# MLOps Project: Abalone Rings Prediction
+<div align="center">
 
-Predict the number of abalone shell rings from physical measurements, then develop a reproducible training workflow and a containerized prediction API. Rings are the supervised target used by this assignment as an indicator of age.
+# MLOps Project: Abalone Age Prediction
+
+[![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)]()
+[![Linting: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-informational?logo=pre-commit&logoColor=white)](https://github.com/artefactory/xhec-mlops-project-student/blob/main/.pre-commit-config.yaml)
+</div>
+
+## 🎯 Project Overview
+
+Welcome to your MLOps project! In this hands-on project, you'll build a complete machine learning system to predict the age of abalone (a type of sea snail) using physical measurements instead of the traditional time-consuming method of counting shell rings under a microscope.
+
+**Your Mission**: Transform a simple ML model into a production-ready system with automated training, deployment, and prediction capabilities.
+
+## 📊 About the Dataset
+
+Traditionally, determining an abalone's age requires:
+1. Cutting the shell through the cone
+2. Staining it
+3. Counting rings under a microscope (very time-consuming!)
+
+**Your Goal**: Use easier-to-obtain physical measurements (shell weight, diameter, etc.) to predict the age automatically.
+
+📥 **Download**: Get the dataset from the [Kaggle page](https://www.kaggle.com/datasets/rodolfomendes/abalone-dataset)
+
+
+## 🚀 Quick Start
+
+### Prerequisites
+- GitHub account
+- [Kaggle account](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F) (for dataset download)
+- Python 3.11
+
+### Setup Steps
+
+1. **Fork this repository**
+   - ⚠️ **Important**: Uncheck "Copy the `main` branch only" to get all project branches
+
+2. **Add your team members** as admins to your forked repository
+
+3. **Set up your development environment**:
+   ```bash
+   # Create and activate a virtual environment
+   uv sync
+   source .venv/bin/activate # on Windows: .venv\Scripts\activate
+
+   # Install pre-commit hooks for code quality
+   uv run pre-commit install
+   ```
+
+## 📋 What You'll Build
+
+By the end of this project, you'll have created:
+
+### 🤖 **Automated ML Pipeline**
+- Training workflows using Prefect
+- Automatic model retraining on schedule
+- Reproducible model and data processing
+
+### 🌐 **Prediction API**
+- REST API for real-time predictions
+- Input validation with Pydantic
+- Docker containerization
+
+### 📊 **Production-Ready Code**
+- Clean, well-documented code
+- Automated testing and formatting
+- Proper error handling
+
+## 📝 How to Work on This Project
+
+### The Branch-by-Branch Approach
+
+This project is organized into numbered branches, each representing a step in building your MLOps system. Think of it like a guided tutorial where each branch teaches you something new!
+
+**Here's how it works**:
+
+1. **Each branch = One pull request** with specific tasks
+2. **Follow the numbers** (branch_0, branch_1, etc.) in order
+3. **Read the PR instructions** (PR_0.md, PR_1.md, etc.) before starting
+4. **Complete all TODOs** in that branch's code
+5. **Create a pull request** when done
+6. **Merge and move to the next branch**
+
+### Step-by-Step Workflow
+
+For each numbered branch:
+
+```bash
+# Switch to the branch
+git checkout branch_number_i
+
+# Get latest changes (except for branch_0)
+git pull origin main
+# Note: A VIM window might open - just type ":wq" to close it
+
+# Push your branch
+git push
+```
+
+Then:
+1. 📖 Read the PR_i.md file carefully
+2. 💻 Complete all the TODOs in the code
+3. 🔧 Test your changes
+4. 📤 Open **ONE** pull request to your main branch
+5. ✅ Merge the pull request
+6. 🔄 Move to the next branch
+
+> **💡 Pro Tip**: Always integrate your previous work when starting a new branch (except branch_0)!
+
+### 🔍 Understanding Pull Requests
+
+Pull Requests (PRs) are how you propose and review changes before merging them into your main codebase. They're essential for team collaboration!
+
+**Important**: When creating a PR, make sure you're merging into YOUR forked repository, not the original:
+
+❌ **Wrong** (merging to original repo):
+![PR Wrong](assets/PR_wrong.png)
+
+✅ **Correct** (merging to your fork):
+![PR Right](assets/PR_right.png)
+
+## 💡 Development Tips
+
+### Managing Dependencies
+
+Use uv to manage dependencies. Install or update packages with:
+
+```bash
+uv add <package>==<version>
+```
+
+Then sync the environment and regenerate the dependency files:
+
+```bash
+uv sync
+```
+
+### Code Quality
+- The pre-commit hooks will automatically format your code
+- Remove all TODOs and unused code before final submission
+- Use clear variable names and add docstrings
+
+## 📊 Evaluation Criteria
+
+Your project will be evaluated on:
+
+### 🔍 **Code Quality**
+- Clean, readable code structure
+- Proper naming conventions
+- Good use of docstrings and type hints
+
+### 🎨 **Code Formatting**
+- Consistent style (automated with pre-commit)
+- Professional presentation
+
+### ⚙️ **Functionality**
+- Code runs without errors
+- All requirements implemented correctly
+
+### 📖 **Documentation & Reproducibility**
+- Clear README with setup instructions
+- Team member names and GitHub usernames
+- Step-by-step instructions to run everything
+
+### 🤝 **Collaboration**
+- Effective use of Pull Requests
+- Good teamwork and communication
+
+---
+
+## 🎯 Final Deliverables Checklist
+
+When you're done, your repository should contain:
+
+✅ **Automated Training Pipeline**
+- [ ] Prefect workflows for model training
+- [ ] Separate modules for training and inference
+- [ ] Reproducible model and encoder generation
+
+✅ **Automated Deployment**
+- [ ] Prefect deployment for regular retraining
+
+✅ **Production API**
+- [ ] Working REST API for predictions
+- [ ] Pydantic input validation
+- [ ] Docker containerization
+
+✅ **Professional Documentation**
+- [ ] Updated README with team info
+- [ ] Clear setup and run instructions
+- [ ] All TODOs removed from code
+
+---
+
+**Ready to start? Head to branch_0 and read PR_0.md for your first task! 🚀**
+
 
 ## Team
 
-| Name | GitHub username |
+| Name | GitHub |
 | --- | --- |
-| Akilan Thevaraja | [akilanthevaraja-max](https://github.com/akilanthevaraja-max) |
-| Hae In KEUM | [conni2](https://github.com/conni2) |
-| Nicolas Trancart | [nicotranfr](https://github.com/nicotranfr) |
-| Alexandre Le Bacon | [Alexandre-Le-Bacon](https://github.com/Alexandre-Le-Bacon) |
+| Akilan Thevaraja | akilanthevaraja-max |
+| Hae In KEUM | conni2 |
+| Nicolas Trancart | nicotranfr |
+| Alexandre Le Bacon | Alexandre-Le-Bacon |
 
-Team repository: [xhec-mlops-2026-project](https://github.com/akilanthevaraja-max/xhec-mlops-2026-project).
+## Reproduce stage 1: EDA and modelling
 
-## Project stages and pull requests
-
-Each numbered branch corresponds to one pull request into **this team repository's `main` branch**, not the original course template repository.
-
-| Stage | Branch | Deliverable |
-| --- | --- | --- |
-| 0 | `0/environment_setup` | Python environment, dependencies, quality hooks, and CI |
-| 1 | `1/eda_and_modelling_on_notebooks` | Dataset exploration and baseline modelling |
-| 2 | `2/from_notebooks_to_modules` | Reusable preprocessing, training, and inference modules |
-| 3 | `3/use_prefect` | Prefect tasks, flows, and scheduled retraining |
-| 4 | `4/deploy_model_api` | Pydantic validation, FastAPI inference, and Docker |
-
-The current implementation covers environment setup only. Training notebooks, modelling modules, scheduled workflows, and the prediction API belong to subsequent stages.
-
-Before starting a later stage, read its `PR_i.md` instructions and integrate the previous work merged into `main`. The branch names above are the actual remote branch names. References to `master` in older task templates should be read as `main` for this repository. Do not merge the previous-stage branch directly before its PR has been reviewed and merged into `main`.
-
-For example, when starting stage 1 after PR 0 is merged:
+From the repository root, use Python 3.11 and the committed uv lockfile:
 
 ```bash
-git fetch origin
-git switch --track origin/1/eda_and_modelling_on_notebooks
-git merge origin/main
-```
-
-Review the diff, run the checks, commit, push the branch, and open one PR to the team's `main`. Use English for code comments, documentation, commit messages, and pull requests.
-
-## Course conventions
-
-This project follows the coding best-practices activity in [the course repository](https://github.com/artefactory/xhec-mlops-2025):
-
-- Python 3.11 and a project-local `.venv` managed with uv.
-- `pyproject.toml` and a committed `uv.lock` for the reproducible environment.
-- Ruff for linting, formatting, and import sorting, using the course rule families, Google-style docstrings, and a 130-character line length.
-- Pre-commit hooks and GitHub Actions for repeatable checks.
-- The course's Prefect 2.13.7, Pydantic 1, FastAPI 0.103.2, and scikit-learn 1.5.2 interfaces.
-
-Ruff provides the formatting and import-ordering roles represented by Black and isort in the older stage-0 template. A second formatter or duplicate linter is intentionally not configured. NumPy is pinned to the compatible 1.26 line, `griffe` stays below 1, and HTTPX stays below 0.28 for this course stack. A small shared constraints file also retains the course-validated cryptography, SciPy, and IPython versions; this avoids a newer cryptography source build requiring additional system OpenSSL tooling on Intel macOS.
-
-## Environment setup
-
-Prerequisites:
-
-- Git and access to this team repository.
-- Python 3.11, or permission for uv to install the selected interpreter.
-- [uv](https://docs.astral.sh/uv/getting-started/installation/). CI uses uv 0.12.21; use the same version when regenerating the lockfile.
-- A Kaggle account if required to download the assignment dataset.
-
-From a fresh clone:
-
-```bash
-git clone https://github.com/akilanthevaraja-max/xhec-mlops-2026-project.git
-cd xhec-mlops-2026-project
-git switch 0/environment_setup
 uv sync --locked
-uv run --locked pre-commit install
+uv run pre-commit install
+uv run jupyter lab
 ```
 
-Activation is optional when using `uv run`. To activate manually:
+Open and run `notebooks/eda.ipynb`, then `notebooks/modelling.ipynb` from top to bottom. Both notebooks resolve the dataset from the repository root or the notebooks directory. The current team branch includes `data/abalone.csv`; the notebooks verify its schema. The modelling run also records its SHA256 hash.
+
+The modelling notebook predicts `Rings` from the eight original predictors. It compares a mean baseline, linear regression, and Ridge (`alpha=1`) using a fixed train/validation/test split. Model selection uses validation RMSE; only the selected model is refitted and evaluated on the final test split. It logs parameters, metrics, and fitted sklearn pipelines to local `mlruns/`, then verifies model reload predictions. `Age` is excluded from all model inputs.
+
+To inspect experiments, run in a separate terminal from the repository root:
 
 ```bash
-# macOS / Linux
-source .venv/bin/activate
+uv run mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5002
 ```
 
-```powershell
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-```
+Open http://127.0.0.1:5002 and select `abalone-rings-notebook`. Three validation runs and one final-test run are created per execution. `mlruns/` and `work/` are ignored; do not commit experiment artifacts or fitted models. Notebook outputs are stripped by pre-commit, so rerun locally to view figures and results. Local execution results are also written to `work/modelling_results.json`.
 
-Select `.venv/bin/python` as the VS Code interpreter and the notebook kernel on macOS/Linux. On Windows select `.venv\Scripts\python.exe`.
-
-The course uv workflow is the primary path validated locally and in CI. The team's Conda option is retained and uses the same Python 3.11 and universal requirements versions:
+For a headless notebook run from the repository root:
 
 ```bash
-conda env create -f environment.yml
-conda activate xhec-mlops
-pre-commit install
+mkdir -p work
+uv run jupyter nbconvert --to notebook --execute notebooks/eda.ipynb --output eda.executed.ipynb --output-dir work
+uv run jupyter nbconvert --to notebook --execute notebooks/modelling.ipynb --output modelling.executed.ipynb --output-dir work
+uv run pre-commit run --all-files
 ```
 
-The Conda environment has a different location from `.venv`; do not copy either environment between systems. The Conda route is supplied as an alternative, not claimed as a separately executed validation.
-
-Stage 0 does not yet define an application package; the empty setuptools package list avoids referencing a `src` directory that has not been introduced yet.
-
-## Dependency files
-
-| File | Purpose |
-| --- | --- |
-| `pyproject.toml` | Direct application dependencies, development group, Python version, and tool configuration |
-| `uv.lock` | Resolved environment used by `uv sync --locked` and CI |
-| `requirements.in` | Direct application requirements required by the assignment |
-| `requirements-dev.in` | Development requirements plus the application input file |
-| `constraints-course.txt` | Course-validated transitive dependency constraints shared by uv and pip-compile |
-| `requirements.txt` | Compiled, hashed application requirements |
-| `requirements-dev.txt` | Compiled, hashed application and development requirements |
-
-The direct requirements in the `.in` files mirror `pyproject.toml`. `scripts/check_dependencies.py` rejects drift between these inputs. Keep both declarations in sync when adding a dependency.
-
-To change an application dependency:
-
-```bash
-uv add 'package==version'
-# Add the same direct requirement to requirements.in.
-uv run --locked python scripts/check_dependencies.py
-uv pip compile --universal --python-version 3.11 --generate-hashes --output-file requirements.txt requirements.in
-uv pip compile --universal --python-version 3.11 --generate-hashes --output-file requirements-dev.txt requirements-dev.in
-uv sync --locked
-```
-
-For a development dependency use `uv add --dev 'package==version'` and update `requirements-dev.in`. JupyterLab and pytest are retained from the team environment work in the development group; joblib is declared explicitly for model serialization. The course pip-tools compiler remains available. The checked-in `.txt` files use the equivalent `uv pip compile --universal` command so platform markers are retained instead of freezing only the current Mac environment. These files are a requirements-based installation alternative. The universal uv lockfile is the primary cross-platform environment definition used by CI. Do not copy `.venv` between teammates or mount a macOS `.venv` into a Linux container; create a new environment on each platform from the same lockfile.
-
-## Local data and generated artifacts
-
-Download the exact [assignment Kaggle dataset](https://www.kaggle.com/datasets/rodolfomendes/abalone-dataset) and extract its CSV into `data/`. Keep the original column names, including `Rings`. The expected layout is:
-
-```text
-data/
-├── .gitkeep
-└── abalone.csv
-```
-
-Raw data, trained models, local work files, credentials, and virtual environments are not committed. Only the directory markers are tracked under `data/` and `models/`. The README records how teammates obtain the same input; later stages will add reproducible processing and model generation.
-
-Check before staging any local data:
-
-```bash
-git check-ignore data/abalone.csv
-git status --short
-```
-
-Store any Kaggle credentials outside the repository. `kaggle.json` and local environment files are ignored as an additional safeguard. A dataset is not needed to run the stage-0 environment checks. The Kaggle download contains 4,177 rows and nine columns. The local CSV SHA-256 is `6fda3c4b0c0cff9bd5f7a46434509179069ed620c8fc7090d872a08d2c1a729a`; compare this hash when reproducing the same data snapshot.
-
-## Code quality and environment checks
-
-```bash
-uv pip check
-uv run --locked python scripts/check_dependencies.py
-uv run --locked python scripts/check_environment.py
-uv run --locked ruff check .
-uv run --locked ruff check --select I .
-uv run --locked ruff format --check .
-uv run --locked pre-commit run --all-files --show-diff-on-failure
-```
-
-The environment check uses tiny synthetic inputs to verify sklearn transformation/training and FastAPI/Pydantic/HTTPX compatibility. It imports Prefect but does not start a server, run the Abalone assignment, or implement later-stage deliverables.
-
-Pre-commit may fix formatting or strip notebook outputs. Review and stage those changes, then rerun it. Notebook output stripping follows the earlier course activity.
-
-GitHub Actions installs the locked environment on Python 3.11 and runs dependency, environment, and pre-commit checks on pushes and pull requests. A local pass does not claim that GitHub Actions has already run remotely; inspect the PR's checks after pushing.
-
-## Stage 0 checklist
-
-- Direct runtime and development dependencies are declared.
-- Course requirements inputs and compiled files are included.
-- Python metadata, team authors, and repository URL are filled in.
-- Ruff and pre-commit are configured; hooks are installed locally.
-- GitHub Actions runs environment and quality checks.
-- Local data and generated artifacts are ignored.
-- The optional Conda environment is aligned with the shared dependencies; assignment-only `PR_0.md` is removed before the PR.
-
-Later-stage setup and execution instructions will be added with the corresponding implementations.
+Stage 1 does not implement the later stages' Python-module training CLI, pickle export, Prefect deployment, or FastAPI/Docker service.
