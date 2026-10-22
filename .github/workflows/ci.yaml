@@ -1,0 +1,32 @@
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python environment and code quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.21"
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Check installed dependencies
+        run: uv pip check
+      - name: Check imports and course API compatibility
+        run: uv run --locked python scripts/check_environment.py
+      - name: Run tests
+        run: uv run --locked pytest
+      - name: Run pre-commit checks
+        run: uv run --locked pre-commit run --all-files --show-diff-on-failure
