@@ -218,6 +218,64 @@ uv run jupyter lab
 
 Open and run `notebooks/eda.ipynb`, then `notebooks/modelling.ipynb` from top to bottom. Both notebooks resolve the dataset from the repository root or the notebooks directory. The current team branch includes `data/abalone.csv`; the notebooks verify its schema. The modelling run also records its SHA256 hash.
 
+## Reproduce stage 2: modular training and inference
+
+The reusable implementation lives in `src/modelling`. It validates the input schema,
+fits categorical encoding and linear regression in one sklearn pipeline, evaluates the
+recipe on a fixed holdout, refits on all observations, and serializes the complete
+pipeline for later API use.
+
+The pickle contains `pipeline` and `metadata`. `metadata.production_training_rows`
+counts the observations used to fit the saved pipeline. The separate
+`metadata.evaluation` block records the holdout model's training/test row counts,
+metrics, and model scope. Those scores describe the evaluation model before the
+full-data refit, not an independent test of the saved full-data pipeline. The
+fixed split reproduces the stage-1 evaluation rather than introducing a new test set.
+
+Train from the repository root:
+
+```bash
+uv sync --locked
+uv run python -m modelling.main data/abalone.csv
+```
+
+The default artifact is written to
+`src/web_service/local_objects/abalone_pipeline.pkl`. Pickle artifacts are ignored by
+Git because they must be regenerated from the versioned code and data. Only load a
+pickle file produced by a trusted source.
+
+Use the saved artifact from Python:
+
+```python
+from modelling.predicting import predict_from_artifact
+
+observation = {
+    "Sex": "M",
+    "Length": 0.455,
+    "Diameter": 0.365,
+    "Height": 0.095,
+    "Whole weight": 0.514,
+    "Shucked weight": 0.2245,
+    "Viscera weight": 0.101,
+    "Shell weight": 0.150,
+}
+
+prediction = predict_from_artifact(
+    "src/web_service/local_objects/abalone_pipeline.pkl",
+    observation,
+)
+print(prediction[0])
+```
+
+Run the automated checks:
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run pre-commit run --all-files --show-diff-on-failure
+```
+
 The modelling notebook predicts `Rings` from the eight original predictors. It compares a mean baseline, linear regression, and Ridge (`alpha=1`) using a fixed train/validation/test split. Model selection uses validation RMSE; only the selected model is refitted and evaluated on the final test split. It logs parameters, metrics, and fitted sklearn pipelines to local `mlruns/`, then verifies model reload predictions. `Age` is excluded from all model inputs.
 
 To inspect experiments, run in a separate terminal from the repository root:
