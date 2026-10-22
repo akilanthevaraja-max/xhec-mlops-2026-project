@@ -1,5 +1,7 @@
 """Tests for the FastAPI prediction service."""
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,7 +22,7 @@ VALID_OBSERVATION = {
 
 
 @pytest.fixture
-def client(monkeypatch: pytest.MonkeyPatch, tmp_path) -> TestClient:
+def client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> TestClient:
     """Serve a pipeline trained on the project dataset, without relying on a saved artifact."""
     monkeypatch.setattr(web_service, "MODEL_PATH", tmp_path / "missing.pkl")
     monkeypatch.setattr(web_service, "artifact", {"pipeline": train_and_evaluate(load_dataset("data/abalone.csv")).pipeline})
@@ -29,10 +31,12 @@ def client(monkeypatch: pytest.MonkeyPatch, tmp_path) -> TestClient:
 
 
 def test_health_check(client: TestClient) -> None:
+    """Return the service health response."""
     assert client.get("/").json() == {"health_check": "App up and running!"}
 
 
 def test_predict_returns_a_number_of_rings(client: TestClient) -> None:
+    """Return a numeric ring estimate for a valid specimen."""
     response = client.post("/predict", json=VALID_OBSERVATION)
 
     assert response.status_code == 201
@@ -41,10 +45,12 @@ def test_predict_returns_a_number_of_rings(client: TestClient) -> None:
 
 @pytest.mark.parametrize("override", [{"Sex": "X"}, {"Length": -1}, {"Shell weight": "heavy"}])
 def test_predict_rejects_invalid_input(client: TestClient, override: dict) -> None:
+    """Reject invalid categories, negative values, and nonnumeric measurements."""
     assert client.post("/predict", json={**VALID_OBSERVATION, **override}).status_code == 422
 
 
 def test_predict_without_model_returns_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Report unavailable predictions when no artifact has been loaded."""
     monkeypatch.setattr(web_service, "artifact", {})
     monkeypatch.setattr(web_service, "MODEL_PATH", web_service.Path("does-not-exist.pkl"))
     with TestClient(web_service.app) as test_client:

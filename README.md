@@ -4,14 +4,14 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.11-blue.svg)]()
 [![Linting: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-informational?logo=pre-commit&logoColor=white)](https://github.com/artefactory/xhec-mlops-project-student/blob/main/.pre-commit-config.yaml)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-informational?logo=pre-commit&logoColor=white)](.pre-commit-config.yaml)
 </div>
 
 ## 🎯 Project Overview
 
-Welcome to your MLOps project! In this hands-on project, you'll build a complete machine learning system to predict the age of abalone (a type of sea snail) using physical measurements instead of the traditional time-consuming method of counting shell rings under a microscope.
+This course project predicts Abalone shell rings from physical measurements. It includes EDA, MLflow experiment tracking, reusable training and prediction modules, Prefect workflows, and a Dockerized FastAPI service. An optional Streamlit interface calls the API.
 
-**Your Mission**: Transform a simple ML model into a production-ready system with automated training, deployment, and prediction capabilities.
+**Prediction target**: `Rings`. The interface also shows the derived age estimate, `predicted Rings + 1.5`.
 
 ## 📊 About the Dataset
 
@@ -28,6 +28,9 @@ Traditionally, determining an abalone's age requires:
 ## 🚀 Quick Start
 
 ### Prerequisites
+
+- uv (CI uses version 0.12.21)
+- Docker for the container instructions
 - GitHub account
 - [Kaggle account](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F) (for dataset download)
 - Python 3.11
@@ -49,9 +52,9 @@ Traditionally, determining an abalone's age requires:
    uv run pre-commit install
    ```
 
-## 📋 What You'll Build
+## 📋 Implemented Components
 
-By the end of this project, you'll have created:
+The numbered stages implement:
 
 ### 🤖 **Automated ML Pipeline**
 - Training workflows using Prefect
@@ -63,7 +66,7 @@ By the end of this project, you'll have created:
 - Input validation with Pydantic
 - Docker containerization
 
-### 📊 **Production-Ready Code**
+### 📊 **Code Quality**
 - Clean, well-documented code
 - Automated testing and formatting
 - Proper error handling
@@ -194,7 +197,7 @@ When you're done, your repository should contain:
 
 ---
 
-**Ready to start? Head to branch_0 and read PR_0.md for your first task! 🚀**
+The execution instructions for each completed stage are below. The original `PR_i.md` task files remain available in Git history.
 
 
 ## Team
@@ -217,6 +220,25 @@ uv run jupyter lab
 ```
 
 Open and run `notebooks/eda.ipynb`, then `notebooks/modelling.ipynb` from top to bottom. Both notebooks resolve the dataset from the repository root or the notebooks directory. The current team branch includes `data/abalone.csv`; the notebooks verify its schema. The modelling run also records its SHA256 hash.
+
+The modelling notebook predicts `Rings` from the eight original predictors. It compares a mean baseline, linear regression, and Ridge (`alpha=1`) using a fixed train/validation/test split. Model selection uses validation RMSE; only the selected model is refitted and evaluated on the final test split. It logs parameters, metrics, and fitted sklearn pipelines to local `mlruns/`, then verifies model reload predictions. `Age` is excluded from all model inputs.
+
+To inspect experiments, run in a separate terminal from the repository root:
+
+```bash
+uv run mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5002
+```
+
+Open http://127.0.0.1:5002 and select `abalone-rings-notebook`. Three validation runs and one final-test run are created per execution. `mlruns/` and `work/` are ignored; do not commit experiment artifacts or fitted models. Notebook outputs are stripped by pre-commit, so rerun locally to view figures and results. Local execution results are also written to `work/modelling_results.json`.
+
+For a headless notebook run from the repository root:
+
+```bash
+mkdir -p work
+uv run jupyter nbconvert --to notebook --execute notebooks/eda.ipynb --output eda.executed.ipynb --output-dir work
+uv run jupyter nbconvert --to notebook --execute notebooks/modelling.ipynb --output modelling.executed.ipynb --output-dir work
+uv run pre-commit run --all-files
+```
 
 ## Reproduce stage 2: modular training and inference
 
@@ -275,27 +297,6 @@ uv run ruff check .
 uv run ruff format --check .
 uv run pre-commit run --all-files --show-diff-on-failure
 ```
-
-The modelling notebook predicts `Rings` from the eight original predictors. It compares a mean baseline, linear regression, and Ridge (`alpha=1`) using a fixed train/validation/test split. Model selection uses validation RMSE; only the selected model is refitted and evaluated on the final test split. It logs parameters, metrics, and fitted sklearn pipelines to local `mlruns/`, then verifies model reload predictions. `Age` is excluded from all model inputs.
-
-To inspect experiments, run in a separate terminal from the repository root:
-
-```bash
-uv run mlflow ui --backend-store-uri ./mlruns --host 127.0.0.1 --port 5002
-```
-
-Open http://127.0.0.1:5002 and select `abalone-rings-notebook`. Three validation runs and one final-test run are created per execution. `mlruns/` and `work/` are ignored; do not commit experiment artifacts or fitted models. Notebook outputs are stripped by pre-commit, so rerun locally to view figures and results. Local execution results are also written to `work/modelling_results.json`.
-
-For a headless notebook run from the repository root:
-
-```bash
-mkdir -p work
-uv run jupyter nbconvert --to notebook --execute notebooks/eda.ipynb --output eda.executed.ipynb --output-dir work
-uv run jupyter nbconvert --to notebook --execute notebooks/modelling.ipynb --output modelling.executed.ipynb --output-dir work
-uv run pre-commit run --all-files
-```
-
-Stage 1 does not implement the later stages' Python-module training CLI, pickle export, Prefect deployment, or FastAPI/Docker service.
 
 ## Stage 3: Prefect training, inference, and scheduled retraining
 
@@ -407,7 +408,7 @@ uv run pre-commit run --all-files
 Automated tests validate the weekly schedule configuration without starting a
 server. Actual flow execution and deployment triggering require the live server
 and runner described above. Generated models, database files, and runtime logs
-are ignored by Git. FastAPI and Docker service delivery remain stage 4.
+are ignored by Git. See stage 4 below for the API and Docker instructions.
 
 ## Stage 4: FastAPI prediction service and Docker
 
@@ -465,5 +466,90 @@ curl -X POST http://localhost:8000/predict -H 'Content-Type: application/json' -
 }'
 ```
 
-The Prefect server logs a harmless `database is locked` telemetry error while starting. Dependencies are managed by
+Dependencies are managed by
 `pyproject.toml` and `uv.lock` (no separate `requirements.in`/`requirements.txt`).
+
+## Additional: Streamlit research interface
+
+This optional extension is separate from the four required project stages. It calls
+FastAPI for predictions; it never reads a pickle or fits a model. It has no CSV
+upload: enter one specimen, choose F/M/I from a dropdown, or click **Fill sample
+values** to populate real measurements from the bundled CSV. Placeholder text is
+an example, not an input value. **Predict shell rings** submits the eight fields to
+`POST /predict`; results show predicted Rings and the derived age (`Rings + 1.5`).
+
+Install the optional app dependencies without changing the base API installation:
+
+```bash
+uv sync --locked --extra app
+```
+
+Start the API in Docker (use alternative host ports to avoid existing course services):
+
+```bash
+docker build --platform linux/amd64 -f Dockerfile.app -t abalone-research-api .
+docker run --detach --name abalone-research-api \
+  -p 127.0.0.1:8002:8001 -p 127.0.0.1:4203:4201 abalone-research-api
+```
+
+Then run the UI from the repository root:
+
+```bash
+API_BASE_URL=http://127.0.0.1:8002 uv run --extra app streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8501
+```
+
+Open http://127.0.0.1:8501. The API URL is configurable in the sidebar. Connection
+checks report reachability only; an API without a loaded model still returns 503
+when predicting. Invalid inputs, missing fields, API outages, and malformed API
+results are displayed without generating simulated predictions. The Explore tab
+works without the API and supports category filtering, feature histograms,
+feature/target relationships, and comparison with the last submitted specimen.
+Percentiles and distribution overlays are descriptive, not confidence intervals.
+
+### Measurement scale and interpretation
+
+Use the **CSV's numeric scale**, not raw physical measurements. For example, the
+first reference specimen has Length 0.455. The [UCI Abalone documentation](https://archive.ics.uci.edu/dataset/1/abalone)
+describes scaling of continuous values. The interface does not apply an assumed
+mm/gram conversion. `I` means infant/immature. Values outside the observed range
+are flagged for review rather than silently clamped; a zero height is flagged as
+implausible. Raw reference anomalies remain visible in exploration.
+
+The app shows a model estimate, not a field-validated measurement or a confidence
+interval. Historical stage-1 error is context only, not live monitoring. The API
+does not currently expose a model version. It loads its model once at startup:
+retraining does not automatically reload a running API. The container trains its
+own artifact at build time; the host Prefect runner's artifact is separate unless
+a shared model path is deliberately configured. Rebuild/restart the service to
+adopt a newly built artifact.
+
+### Tests and shutdown
+
+```bash
+uv run --extra app pytest
+uv run --extra app pre-commit run --all-files
+```
+
+The UI tests use Streamlit AppTest with mocked HTTP responses to verify form
+validation, demo filling, API payloads, displayed results, and clearing old results.
+HTTP-client tests also cover service errors and malformed results. Live Docker
+requests and browser interaction should be checked separately when changing the
+integration. CI installs the `app` extra so these tests run rather than skip.
+
+Stop the UI with Ctrl+C. Stop/remove only this extension's container with:
+
+```bash
+docker stop abalone-research-api
+docker rm abalone-research-api
+```
+
+The local UI, API container, and existing course services use different ports.
+
+## Verification scope
+
+The extension was checked with 24 passing tests, pre-commit, GitHub CI,
+Linux/amd64 Docker builds, live API requests, and browser prediction through
+Streamlit. The host Prefect deployment was manually triggered successfully and
+generated upcoming weekly runs; a weekly scheduled execution has not yet been
+observed. The Docker checks confirmed API prediction and Prefect health, not
+scheduled retraining inside the container.
