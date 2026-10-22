@@ -26,5 +26,7 @@ jobs:
         run: uv pip check
       - name: Check imports and course API compatibility
         run: uv run --locked python scripts/check_environment.py
+      - name: Run tests
+        run: uv run --locked pytest
       - name: Run pre-commit checks
         run: uv run --locked pre-commit run --all-files --show-diff-on-failure

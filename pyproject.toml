@@ -52,8 +52,11 @@ dev = [
 default-groups = ["dev"]
 constraint-dependencies = ["cryptography==45.0.7", "scipy==1.16.1", "ipython==9.5.0"]
 
-[tool.setuptools]
-packages = []
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 130
