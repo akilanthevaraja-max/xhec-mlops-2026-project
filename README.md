@@ -467,3 +467,79 @@ curl -X POST http://localhost:8000/predict -H 'Content-Type: application/json' -
 
 The Prefect server logs a harmless `database is locked` telemetry error while starting. Dependencies are managed by
 `pyproject.toml` and `uv.lock` (no separate `requirements.in`/`requirements.txt`).
+
+## Additional: Streamlit research interface
+
+This optional extension is separate from the four required project stages. It calls
+FastAPI for predictions; it never reads a pickle or fits a model. It has no CSV
+upload: enter one specimen, choose F/M/I from a dropdown, or click **Fill sample
+values** to populate real measurements from the bundled CSV. Placeholder text is
+an example, not an input value. **Predict shell rings** submits the eight fields to
+`POST /predict`; results show predicted Rings and the derived age (`Rings + 1.5`).
+
+Install the optional app dependencies without changing the base API installation:
+
+```bash
+uv sync --locked --extra app
+```
+
+Start the API in Docker (use alternative host ports to avoid existing course services):
+
+```bash
+docker build --platform linux/amd64 -f Dockerfile.app -t abalone-research-api .
+docker run --detach --name abalone-research-api \
+  -p 127.0.0.1:8002:8001 -p 127.0.0.1:4203:4201 abalone-research-api
+```
+
+Then run the UI from the repository root:
+
+```bash
+API_BASE_URL=http://127.0.0.1:8002 uv run --extra app streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8501
+```
+
+Open http://127.0.0.1:8501. The API URL is configurable in the sidebar. Connection
+checks report reachability only; an API without a loaded model still returns 503
+when predicting. Invalid inputs, missing fields, API outages, and malformed API
+results are displayed without generating simulated predictions. The Explore tab
+works without the API and supports category filtering, feature histograms,
+feature/target relationships, and comparison with the last submitted specimen.
+Percentiles and distribution overlays are descriptive, not confidence intervals.
+
+### Measurement scale and interpretation
+
+Use the **CSV's numeric scale**, not raw physical measurements. For example, the
+first reference specimen has Length 0.455. The [UCI Abalone documentation](https://archive.ics.uci.edu/dataset/1/abalone)
+describes scaling of continuous values. The interface does not apply an assumed
+mm/gram conversion. `I` means infant/immature. Values outside the observed range
+are flagged for review rather than silently clamped; a zero height is flagged as
+implausible. Raw reference anomalies remain visible in exploration.
+
+The app shows a model estimate, not a field-validated measurement or a confidence
+interval. Historical stage-1 error is context only, not live monitoring. The API
+does not currently expose a model version. It loads its model once at startup:
+retraining does not automatically reload a running API. The container trains its
+own artifact at build time; the host Prefect runner's artifact is separate unless
+a shared model path is deliberately configured. Rebuild/restart the service to
+adopt a newly built artifact.
+
+### Tests and shutdown
+
+```bash
+uv run --extra app pytest
+uv run --extra app pre-commit run --all-files
+```
+
+The UI tests use Streamlit AppTest with mocked HTTP responses to verify form
+validation, demo filling, API payloads, displayed results, and clearing old results.
+HTTP-client tests also cover service errors and malformed results. Live Docker
+requests and browser interaction should be checked separately when changing the
+integration. CI installs the `app` extra so these tests run rather than skip.
+
+Stop the UI with Ctrl+C. Stop/remove only this extension's container with:
+
+```bash
+docker stop abalone-research-api
+docker rm abalone-research-api
+```
+
+The local UI, API container, and existing course services use different ports.

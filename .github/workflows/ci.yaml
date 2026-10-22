@@ -21,7 +21,7 @@ jobs:
           version: "0.12.21"
           enable-cache: true
       - name: Install locked dependencies
-        run: uv sync --locked
+        run: uv sync --locked --extra app
       - name: Check installed dependencies
         run: uv pip check
       - name: Check imports and course API compatibility
