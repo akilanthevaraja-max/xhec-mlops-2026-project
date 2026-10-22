@@ -1,21 +1,71 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "xhec-mlops-project-student"
-authors = [
-  { name = "username", email = "user@email.com" },
-] # TODO: add authors here
-description = "This repository contains the solution for the X-HEC MLOps Project on the industrialization of Abalone age prediction model."
 version = "0.0.1"
+description = "Reproducible Abalone rings prediction and MLOps course project"
 readme = "README.md"
-requires-python = ">3.10" # TODO: update this version
+requires-python = ">=3.11,<3.12"
+authors = [
+    { name = "Akilan Thevaraja" },
+    { name = "Hae In KEUM" },
+    { name = "Nicolas Trancart" },
+    { name = "Alexandre Le Bacon" },
+]
+dependencies = [
+    "numpy==1.26.4",
+    "pandas==2.1.1",
+    "scikit-learn==1.5.2",
+    "joblib==1.5.2",
+    "matplotlib==3.10.6",
+    "seaborn==0.12.2",
+    "loguru==0.7.2",
+    "pydantic>=1,<2",
+    "fastapi==0.103.2",
+    "uvicorn==0.23.2",
+    "prefect==2.13.7",
+    "griffe<1.0.0",
+    "httpx>=0.24.1,<0.28",
+    "setuptools==80.9.0",
+]
 
 [project.urls]
-"Homepage" = "https://github.com/artefactory/xhec-mlops-project-student" # TODO: update this URL
+Repository = "https://github.com/akilanthevaraja-max/xhec-mlops-2026-project"
+
+[dependency-groups]
+dev = [
+    "ipykernel==6.25.2",
+    "jupyterlab==4.4.7",
+    "pytest==8.4.2",
+    "nbclient==0.10.4",
+    "nbstripout==0.8.1",
+    "pre-commit==4.2.0",
+    "ruff==0.12.11",
+    "pip-tools==7.5.0",
+    "pip==25.2",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+constraint-dependencies = ["cryptography==45.0.7", "scipy==1.16.1", "ipython==9.5.0"]
 
 [tool.setuptools]
-packages = ["src"]
+packages = []
 
-# TODO: add black, isort, and ruff (optional - not needed if using flake8) configurations here
+[tool.ruff]
+line-length = 130
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["D", "ANN", "E", "W", "F", "N", "Q", "ARG", "PTH"]
+ignore = ["D417", "D100", "PD901", "N806", "N815", "N803", "ANN401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+order-by-type = true
