@@ -1,0 +1,12 @@
+.git
+.venv
+.prefect
+work
+mlruns
+notebooks
+tests
+assets
+models
+**/__pycache__
+*.egg-info
+src/web_service/local_objects/*.pkl
