@@ -419,7 +419,7 @@ The service lives in `src/web_service`:
   and the seven measurements must be `>= 0`.
 - `lib/inference.py`: runs `modelling.predicting.predict` on one validated observation.
 - `utils.py`: `load_object`, which loads the trusted training pickle.
-- `main.py`: `GET /` (health check) and `POST /predict`. The pipeline is loaded once at startup from
+- `main.py`: `GET /` (health check), `GET /model-info` and `POST /predict`. The pipeline is loaded once at startup from
   `src/web_service/local_objects/abalone_pipeline.pkl` (override with the `MODEL_PATH` environment variable).
   If the file is missing, `/predict` answers `503`; invalid input answers `422`.
 
@@ -444,6 +444,13 @@ curl -X POST http://127.0.0.1:8001/predict -H 'Content-Type: application/json' -
 ```
 
 `prediction` is the predicted number of rings (the age in years is `Rings + 1.5`).
+
+To check which model the API is serving (features, SHA256 of the training CSV, row counts and holdout
+MAE/RMSE/R²), call `GET /model-info`; it answers `503` when no model is loaded:
+
+```bash
+curl http://127.0.0.1:8001/model-info
+```
 
 ### Run the API in Docker
 
@@ -517,7 +524,7 @@ implausible. Raw reference anomalies remain visible in exploration.
 
 The app shows a model estimate, not a field-validated measurement or a confidence
 interval. Historical stage-1 error is context only, not live monitoring. The API
-does not currently expose a model version. It loads its model once at startup:
+exposes the loaded model's training metadata at `GET /model-info` (no version number). It loads its model once at startup:
 retraining does not automatically reload a running API. The container trains its
 own artifact at build time; the host Prefect runner's artifact is separate unless
 a shared model path is deliberately configured. Rebuild/restart the service to

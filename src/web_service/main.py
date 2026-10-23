@@ -33,6 +33,14 @@ def home() -> dict:
     return {"health_check": "App up and running!"}
 
 
+@app.get("/model-info")
+def model_info() -> dict[str, Any]:
+    """Describe the loaded model: features, training data hash, and holdout evaluation metrics."""
+    if "pipeline" not in artifact:
+        raise HTTPException(status_code=503, detail=f"Model not available at {MODEL_PATH}. Run the training flow first.")
+    return {"model_path": str(MODEL_PATH), **artifact.get("metadata", {})}
+
+
 @app.post("/predict", response_model=AbaloneOutput, status_code=201)
 def predict(payload: AbaloneInput) -> AbaloneOutput:
     """Predict the number of rings for one abalone."""
