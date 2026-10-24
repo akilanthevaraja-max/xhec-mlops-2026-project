@@ -8,7 +8,7 @@ import httpx
 import pandas as pd
 import streamlit as st
 
-from research_app.client import PredictionServiceError, request_prediction
+from research_app.client import PredictionServiceError, request_model_info, request_prediction
 from research_app.data import DESCRIPTIONS, FEATURES, SEX_LABELS, load_reference_data, range_warnings
 
 st.set_page_config(page_title="Abalone age prediction", page_icon="🐚", layout="wide")
@@ -182,7 +182,7 @@ def render_prediction(frame: pd.DataFrame, api_url: str) -> None:
             st.write(
                 (
                     "The API loads a saved model at startup. Retraining does not automatically reload that "
-                    "running service. The current endpoint does not expose a model version."
+                    "running service. Use Show model details in the sidebar to see which model is loaded."
                 )
             )
 
@@ -262,6 +262,33 @@ def render_exploration(frame: pd.DataFrame) -> None:
         )
 
 
+def render_model_info(api_url: str) -> None:
+    """Show which model the API serves, using its GET /model-info endpoint."""
+    st.markdown("### Loaded model")
+    if st.button("Show model details"):
+        try:
+            st.session_state["model_info"] = request_model_info(api_url)
+        except PredictionServiceError as exc:
+            st.session_state.pop("model_info", None)
+            st.error(str(exc))
+    info = st.session_state.get("model_info")
+    if info is None:
+        st.caption("Ask the API which pipeline it loaded at startup and how it scored on the holdout split.")
+        return
+    evaluation = info["evaluation"]
+    metrics = evaluation["test_metrics"]
+    st.markdown(f"**{info.get('model', 'unknown model').replace('_', ' ').capitalize()}** predicting `{info.get('target')}`")
+    st.markdown(f"| MAE | RMSE | R² |\n|---|---|---|\n| {metrics['mae']:.2f} | {metrics['rmse']:.2f} | {metrics['r2']:.2f} |")
+    st.caption(
+        f"Holdout of {evaluation.get('test_rows', '?')} rows, scored before the full-data refit. "
+        f"Served model trained on {info.get('production_training_rows', '?')} rows."
+    )
+    with st.expander("Model metadata"):
+        st.markdown(f"Training data SHA256: `{str(info.get('dataset_sha256', ''))[:12]}…`")
+        st.markdown("Features: " + ", ".join(f"`{feature}`" for feature in info.get("features", [])))
+        st.json(info, expanded=False)
+
+
 def main() -> None:
     """Render the research interface without loading a local prediction model."""
     st.title("🐚 Abalone age prediction")
@@ -277,6 +304,8 @@ def main() -> None:
                 st.success("API reachable. Model availability is checked when predicting.")
             except (httpx.HTTPError, httpx.InvalidURL):
                 st.error("API is unavailable. Start the service or check its URL.")
+        st.divider()
+        render_model_info(api_url)
         st.divider()
         st.caption("Reference data stays available when the prediction service is offline.")
     try:

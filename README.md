@@ -485,6 +485,29 @@ values** to populate real measurements from the bundled CSV. Placeholder text is
 an example, not an input value. **Predict shell rings** submits the eight fields to
 `POST /predict`; results show predicted Rings and the derived age (`Rings + 1.5`).
 
+### Run the whole stack with Docker Compose (recommended)
+
+One command builds and starts both containers: the API image (`Dockerfile.app`, FastAPI +
+Prefect UI, model trained at build time) and the UI image (`Dockerfile.ui`, Streamlit only,
+no model or API code):
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+| --- | --- |
+| Streamlit interface | http://localhost:8501 |
+| FastAPI docs | http://localhost:8000/docs |
+| Prefect UI | http://localhost:4200 |
+
+The UI waits until the API health check passes, then reaches it inside the Compose
+network at `http://api:8001` (service name, not `localhost`). Click **Show model details**
+in the sidebar to display the loaded model and its holdout MAE/RMSE/R², read from
+`GET /model-info`. Stop everything with Ctrl+C, then `docker compose down`.
+
+### Run the UI without Docker
+
 Install the optional app dependencies without changing the base API installation:
 
 ```bash
@@ -507,7 +530,8 @@ API_BASE_URL=http://127.0.0.1:8002 uv run --extra app streamlit run streamlit_ap
 
 Open http://127.0.0.1:8501. The API URL is configurable in the sidebar. Connection
 checks report reachability only; an API without a loaded model still returns 503
-when predicting. Invalid inputs, missing fields, API outages, and malformed API
+when predicting. **Show model details** calls `GET /model-info` and reports a 503 as
+"no loaded model" instead of showing stale metrics. Invalid inputs, missing fields, API outages, and malformed API
 results are displayed without generating simulated predictions. The Explore tab
 works without the API and supports category filtering, feature histograms,
 feature/target relationships, and comparison with the last submitted specimen.
@@ -539,11 +563,13 @@ uv run --extra app pre-commit run --all-files
 
 The UI tests use Streamlit AppTest with mocked HTTP responses to verify form
 validation, demo filling, API payloads, displayed results, and clearing old results.
-HTTP-client tests also cover service errors and malformed results. Live Docker
+HTTP-client tests also cover service errors and malformed results, for both
+`/predict` and `/model-info`. `tests/test_docker_compose.py` checks that Compose
+points the UI at the API service and that the UI image ships no model code. Live Docker
 requests and browser interaction should be checked separately when changing the
 integration. CI installs the `app` extra so these tests run rather than skip.
 
-Stop the UI with Ctrl+C. Stop/remove only this extension's container with:
+Stop the UI with Ctrl+C. If you started the API with `docker run`, stop/remove only this extension's container with:
 
 ```bash
 docker stop abalone-research-api

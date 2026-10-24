@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 import pytest
 
-from research_app.client import PredictionServiceError, request_prediction
+from research_app.client import PredictionServiceError, request_model_info, request_prediction
 
 
 def test_prediction_client_posts_exact_specimen(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -99,3 +99,91 @@ def test_prediction_client_rejects_invalid_api_urls(url: str) -> None:
     """Reject invalid endpoint configuration before attempting a request."""
     with pytest.raises(PredictionServiceError, match="valid HTTP"):
         request_prediction(url, {})
+
+
+MODEL_INFO = {
+    "model_path": "/app/src/web_service/local_objects/abalone_pipeline.pkl",
+    "model": "linear_regression",
+    "features": ["Sex", "Length", "Diameter", "Height", "Whole weight", "Shucked weight", "Viscera weight", "Shell weight"],
+    "target": "Rings",
+    "dataset_sha256": "6fda3c4b0c0c" + "0" * 52,
+    "production_training_rows": 4177,
+    "evaluation": {"test_rows": 836, "test_metrics": {"mae": 1.593, "rmse": 2.212, "r2": 0.548}},
+}
+
+
+def test_model_info_client_reads_the_model_info_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Request GET /model-info and return the API's metadata unchanged."""
+    calls = []
+
+    def get(url: str, **_kwargs: Any) -> httpx.Response:
+        calls.append(url)
+        return httpx.Response(200, json=MODEL_INFO)
+
+    monkeypatch.setattr("research_app.client.httpx.get", get)
+    assert request_model_info("http://api:8001/") == MODEL_INFO
+    assert calls == ["http://api:8001/model-info"]
+
+
+@pytest.mark.parametrize(
+    ("response", "message"),
+    [
+        (httpx.Response(503), "no loaded model"),
+        (httpx.Response(404), "HTTP 404"),
+        (httpx.Response(200, json={"model": "linear_regression"}), "invalid model information"),
+        (httpx.Response(200, json={**MODEL_INFO, "evaluation": {"test_metrics": {"mae": "low"}}}), "invalid model information"),
+    ],
+)
+def test_model_info_client_reports_unusable_responses(
+    monkeypatch: pytest.MonkeyPatch, response: httpx.Response, message: str
+) -> None:
+    """Explain a missing model, an older API without the endpoint, or malformed metadata."""
+    monkeypatch.setattr("research_app.client.httpx.get", lambda *_args, **_kwargs: response)
+    with pytest.raises(PredictionServiceError, match=message):
+        request_model_info("http://api:8001")
+
+
+def test_model_info_client_reports_offline_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Give the same actionable message as predictions when the API is down."""
+
+    def offline(*_args: Any, **_kwargs: Any) -> None:
+        """Simulate a refused API connection."""
+        raise httpx.ConnectError("Connection refused")
+
+    monkeypatch.setattr("research_app.client.httpx.get", offline)
+    with pytest.raises(PredictionServiceError, match="Cannot reach"):
+        request_model_info("http://api:8001")
+
+
+def test_sidebar_shows_loaded_model_details(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Display the served model's holdout metrics only after the user asks for them."""
+    pytest.importorskip("streamlit")
+    from streamlit.testing.v1 import AppTest
+
+    calls = []
+
+    def get(url: str, **_kwargs: Any) -> httpx.Response:
+        calls.append(url)
+        return httpx.Response(200, json=MODEL_INFO)
+
+    monkeypatch.setattr("research_app.client.httpx.get", get)
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "streamlit_app.py"), default_timeout=30).run()
+    assert not calls
+    next(button for button in app.sidebar.button if button.label == "Show model details").click().run()
+    assert not app.exception
+    assert calls == ["http://127.0.0.1:8002/model-info"]
+    sidebar_text = " ".join(block.value for block in app.sidebar.markdown)
+    assert "Linear regression" in sidebar_text
+    assert "| 1.59 | 2.21 | 0.55 |" in sidebar_text
+
+
+def test_sidebar_reports_unavailable_model(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Show the API error instead of stale or invented model details."""
+    pytest.importorskip("streamlit")
+    from streamlit.testing.v1 import AppTest
+
+    monkeypatch.setattr("research_app.client.httpx.get", lambda *_args, **_kwargs: httpx.Response(503))
+    app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "streamlit_app.py"), default_timeout=30).run()
+    next(button for button in app.sidebar.button if button.label == "Show model details").click().run()
+    assert any("no loaded model" in error.value for error in app.sidebar.error)
+    assert not any("RMSE" in block.value for block in app.sidebar.markdown)
